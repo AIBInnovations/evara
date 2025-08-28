@@ -1,60 +1,112 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const ParallaxSection = () => {
-  const [scrollY, setScrollY] = useState(0);
-  const [sectionInView, setSectionInView] = useState(false);
+  const containerRef = useRef(null);
+  const sectionRef = useRef(null);
+  const maskRef = useRef(null);
+  const contentRef = useRef(null);
+  const borderRef = useRef(null);
+  const floatingElementsRef = useRef([]);
+  const [isFullyExpanded, setIsFullyExpanded] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-      
-      // Check if section is in view
-      const section = document.getElementById('parallax-section');
-      if (section) {
-        const rect = section.getBoundingClientRect();
-        const inView = rect.top < window.innerHeight && rect.bottom > 0;
-        setSectionInView(inView);
-      }
-    };
+    const container = containerRef.current;
+    const section = sectionRef.current;
+    const mask = maskRef.current;
+    const content = contentRef.current;
+    const border = borderRef.current;
+    
+    if (!container || !section || !mask || !content || !border) return;
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Create timeline for the circle expansion animation
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: container,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: 1,
+        onUpdate: (self) => {
+          const progress = self.progress;
+          const expansionProgress = 15 + (progress * 85);
+          setIsFullyExpanded(expansionProgress >= 90);
+        }
+      }
+    });
+
+    // Animate the circle mask expansion
+    tl.fromTo(mask, 
+      { 
+        clipPath: "circle(15% at 50% 50%)" 
+      },
+      { 
+        clipPath: "circle(100% at 50% 50%)",
+        ease: "power2.inOut"
+      }
+    );
+
+    // Animate the decorative border
+    tl.fromTo(border,
+      {
+        width: "120px",
+        height: "120px",
+        opacity: 0
+      },
+      {
+        width: "800px",
+        height: "800px",
+        opacity: 0.8,
+        ease: "power2.inOut"
+      },
+      0
+    );
+
+    // Animate content fade in after expansion
+    gsap.set(content, { opacity: 0, y: 30 });
+    
+    ScrollTrigger.create({
+      trigger: container,
+      start: "top bottom",
+      end: "bottom top",
+      onUpdate: (self) => {
+        if (self.progress > 0.8) {
+          gsap.to(content, { 
+            opacity: 1, 
+            y: 0, 
+            duration: 1,
+            ease: "power2.out"
+          });
+        }
+      }
+    });
+
+    // Animate floating elements with parallax
+    floatingElementsRef.current.forEach((el, index) => {
+      if (el) {
+        gsap.to(el, {
+          y: -100 * (index + 1),
+          scrollTrigger: {
+            trigger: container,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true
+          }
+        });
+      }
+    });
+
+    return () => {
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    };
   }, []);
 
-  // Calculate expansion based on scroll position within the container
-  const calculateExpansion = () => {
-    const container = document.getElementById('parallax-container');
-    if (!container) return 15;
-    
-    const rect = container.getBoundingClientRect();
-    const containerTop = rect.top + window.scrollY;
-    const containerHeight = rect.height;
-    const viewportHeight = window.innerHeight;
-    
-    // Only start expansion when container top reaches viewport top (section fully visible)
-    const sectionFullyVisible = containerTop <= scrollY;
-    
-    if (!sectionFullyVisible) return 15; // Keep initial circle until section is fully visible
-    
-    // Calculate how far we've scrolled beyond the section being fully visible
-    const scrollBeyondVisible = scrollY - containerTop;
-    
-    // Full expansion happens over the extra height we added (200vh)
-    const expansionDistance = containerHeight - viewportHeight; // The extra scroll distance
-    
-    if (scrollBeyondVisible <= 0) return 15; // Initial circle at the start
-    if (scrollBeyondVisible >= expansionDistance) return 100;
-    
-    const progress = scrollBeyondVisible / expansionDistance;
-    return Math.min(100, Math.max(15, 15 + progress * 85));
-  };
-
-  const expansionProgress = calculateExpansion();
-  const isFullyExpanded = expansionProgress >= 90;
-
   return (
-    <div id="parallax-container" style={{ height: `300vh` }}>
+    <div ref={containerRef} id="parallax-container" style={{ height: `300vh` }}>
       <section 
+        ref={sectionRef}
         id="parallax-section" 
         className="sticky top-0 h-screen bg-[#1c1815] overflow-hidden flex items-center justify-center"
       >
@@ -63,34 +115,26 @@ const ParallaxSection = () => {
       <div className="relative w-full h-full flex items-center justify-center">
         {/* Mandala SVG Mask */}
         <div 
-          className="absolute inset-0 transition-all duration-300 ease-out"
+          ref={maskRef}
+          className="absolute inset-0"
           style={{
-            clipPath: `circle(${expansionProgress}% at 50% 50%)`,
+            clipPath: "circle(15% at 50% 50%)",
+            backgroundImage: 'url(/wedding.jpg)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundAttachment: 'fixed'
           }}
-        >
-          <img 
-            src="/wedding.jpg"
-            alt="Wedding celebration"
-            className="w-full h-full object-cover"
-            loading="lazy"
-            style={{ opacity: 0, position: 'absolute', zIndex: -1 }}
-            onLoad={(e) => {
-              e.target.parentElement.style.background = 'url(/wedding.jpg)';
-            }}
-          />
-        </div>
+        />
         
         {/* Decorative Mandala Border */}
         <div 
-          className="absolute transition-all duration-500 ease-out border-4 border-[#AA7220] rounded-full"
+          ref={borderRef}
+          className="absolute border-4 border-[#AA7220] rounded-full"
           style={{
-            width: `${expansionProgress * 8}px`,
-            height: `${expansionProgress * 8}px`,
-            opacity: expansionProgress > 10 ? 0.8 : 0,
-            boxShadow: `0 0 ${expansionProgress}px rgba(170, 114, 32, 0.5)`
+            width: "120px",
+            height: "120px",
+            opacity: 0,
+            boxShadow: `0 0 50px rgba(170, 114, 32, 0.5)`
           }}
         >
           {/* Inner decorative rings */}
@@ -110,9 +154,8 @@ const ParallaxSection = () => {
 
         {/* Content Overlay - appears after full expansion */}
         <div 
-          className={`relative z-10 text-center transition-all duration-1000 ${
-            isFullyExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          }`}
+          ref={contentRef}
+          className="relative z-10 text-center"
         >
           <div className="bg-black/40 backdrop-blur-sm rounded-3xl p-8 lg:p-12 border border-[#AA7220]/30">
             <h2 className="text-4xl lg:text-6xl font-serif text-[#fdf8f3] mb-6 leading-tight">
@@ -141,32 +184,26 @@ const ParallaxSection = () => {
 
         {/* Floating decorative elements */}
         <div 
-          className={`absolute top-20 left-20 transition-all duration-1000 ${
+          ref={(el) => floatingElementsRef.current[0] = el}
+          className={`absolute top-20 left-20 transition-opacity duration-1000 ${
             isFullyExpanded ? 'opacity-60' : 'opacity-0'
           }`}
-          style={{
-            transform: `translateY(${scrollY * -0.2}px)`
-          }}
         >
           <div className="w-2 h-2 bg-[#AA7220] rounded-full animate-pulse"></div>
         </div>
         <div 
-          className={`absolute bottom-32 right-24 transition-all duration-1000 ${
+          ref={(el) => floatingElementsRef.current[1] = el}
+          className={`absolute bottom-32 right-24 transition-opacity duration-1000 ${
             isFullyExpanded ? 'opacity-60' : 'opacity-0'
           }`}
-          style={{
-            transform: `translateY(${scrollY * -0.1}px)`
-          }}
         >
           <div className="w-3 h-3 bg-[#d8ad7f] rounded-full animate-pulse"></div>
         </div>
         <div 
-          className={`absolute top-40 right-32 transition-all duration-1000 ${
+          ref={(el) => floatingElementsRef.current[2] = el}
+          className={`absolute top-40 right-32 transition-opacity duration-1000 ${
             isFullyExpanded ? 'opacity-40' : 'opacity-0'
           }`}
-          style={{
-            transform: `translateY(${scrollY * -0.15}px)`
-          }}
         >
           <div className="w-1 h-1 bg-[#fdf8f3] rounded-full animate-pulse"></div>
         </div>

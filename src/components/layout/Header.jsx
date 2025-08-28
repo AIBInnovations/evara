@@ -1,10 +1,14 @@
 // src/components/layout/Header.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
 import Button from '../ui/Button';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const headerRef = useRef(null);
+  const logoRef = useRef(null);
+  const navRef = useRef(null);
 
   useEffect(() => {
     // Preload both logo images
@@ -16,54 +20,97 @@ const Header = () => {
     };
     preloadImages();
 
+    const header = headerRef.current;
+    const logo = logoRef.current;
+    const nav = navRef.current;
+
+    if (!header || !logo || !nav) return;
+
     const handleScroll = () => {
       const scrollTop = window.scrollY;
-      setIsScrolled(scrollTop > 300);
+      const newScrollState = scrollTop > 50; // Changed from 300 to 50
+
+      if (newScrollState !== isScrolled) {
+        setIsScrolled(newScrollState);
+
+        if (newScrollState) {
+          // Animate to scrolled state - ONLY background and blur
+          gsap.to(header, {
+            backgroundColor: 'rgba(253, 248, 243, 0.95)',
+            backdropFilter: 'blur(10px)',
+            duration: 0.4,
+            ease: "power2.out"
+          });
+          
+        } else {
+          // Animate to initial state - ONLY background and blur
+          gsap.to(header, {
+            backgroundColor: 'transparent',
+            backdropFilter: 'blur(0px)',
+            duration: 0.4,
+            ease: "power2.out"
+          });
+        }
+      }
     };
+
+    // Initial state setup - ONLY background
+    gsap.set(header, {
+      backgroundColor: 'transparent'
+    });
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isScrolled]);
 
   return (
-    <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-      isScrolled ? 'bg-[#fdf8f3] shadow-md pt-6 pb-2' : 'bg-transparent pt-6 pb-4'
-    }`}>
-      <nav className={`container mx-auto px-6 lg:px-12 transition-all duration-300 ${
-        isScrolled ? 'py-8' : 'py-8'
-      }`}>
+    <header 
+      ref={headerRef}
+      className={`fixed top-0 left-0 w-full z-50 pt-6 pb-4 ${
+        isScrolled ? 'shadow-lg' : ''
+      }`}
+      style={{ 
+        backgroundColor: 'transparent',
+        backdropFilter: 'blur(0px)',
+        WebkitBackdropFilter: 'blur(0px)'
+      }}
+    >
+      <nav 
+        ref={navRef}
+        className="container mx-auto px-6 lg:px-12 py-8"
+      >
         <div className="relative flex items-center">
           {/* Mobile Menu Button */}
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="lg:hidden w-7 h-5 relative focus:outline-none z-10"
           >
-            <span className={`block absolute h-0.5 w-full left-0 top-0 transition-all duration-300 ${
+            <span className={`block absolute h-0.5 w-full left-0 top-0 transition-all duration-400 ${
               isScrolled ? 'bg-[#00223f]' : 'bg-[#fdf8f3]'
             }`}></span>
-            <span className={`block absolute h-0.5 w-full left-0 top-2 transition-all duration-300 ${
+            <span className={`block absolute h-0.5 w-full left-0 top-2 transition-all duration-400 ${
               isScrolled ? 'bg-[#00223f]' : 'bg-[#fdf8f3]'
             }`}></span>
-            <span className={`block absolute h-0.5 w-full left-0 top-4 transition-all duration-300 ${
+            <span className={`block absolute h-0.5 w-full left-0 top-4 transition-all duration-400 ${
               isScrolled ? 'bg-[#00223f]' : 'bg-[#fdf8f3]'
             }`}></span>
           </button>
           
           {/* Desktop Navigation - Left */}
           <div className="hidden lg:flex items-center space-x-8 absolute left-0">
-            <a href="#packages" className={`text-sm font-medium tracking-wider hover:opacity-80 transition-all duration-300 ${
+            <a href="#packages" className={`text-sm font-medium tracking-wider hover:opacity-80 transition-all duration-400 ${
               isScrolled ? 'text-[#00223f]' : 'text-[#fdf8f3]'
             }`}>
               WEDDING PACKAGES
             </a>
-            <div className={`w-px h-4 ${isScrolled ? 'bg-[#00223f]/30' : 'bg-[#fdf8f3]/30'} transition-all duration-300`}></div>
-            <a href="#services" className={`text-sm font-medium tracking-wider hover:opacity-80 transition-all duration-300 ${
+            <div className={`w-px h-4 transition-all duration-400 ${isScrolled ? 'bg-[#00223f]/30' : 'bg-[#fdf8f3]/30'}`}></div>
+            <a href="#services" className={`text-sm font-medium tracking-wider hover:opacity-80 transition-all duration-400 ${
               isScrolled ? 'text-[#00223f]' : 'text-[#fdf8f3]'
             }`}>
               SERVICES
             </a>
-            <div className={`w-px h-4 ${isScrolled ? 'bg-[#00223f]/30' : 'bg-[#fdf8f3]/30'} transition-all duration-300`}></div>
-            <a href="#about" className={`text-sm font-medium tracking-wider hover:opacity-80 transition-all duration-300 ${
+            <div className={`w-px h-4 transition-all duration-400 ${isScrolled ? 'bg-[#00223f]/30' : 'bg-[#fdf8f3]/30'}`}></div>
+            <a href="#about" className={`text-sm font-medium tracking-wider hover:opacity-80 transition-all duration-400 ${
               isScrolled ? 'text-[#00223f]' : 'text-[#fdf8f3]'
             }`}>
               ABOUT
@@ -74,9 +121,10 @@ const Header = () => {
           <div className="absolute left-1/2 transform -translate-x-1/2">
             <div className="text-center">
               <img 
+                ref={logoRef}
                 src={isScrolled ? "/logo.png" : "/logo1.png"}
                 alt="Evora - Elegance & Dreams" 
-                className="h-28 lg:h-36 w-auto mx-auto transition-all duration-300"
+                className="h-28 lg:h-36 w-auto mx-auto transition-all duration-400"
               />
             </div>
           </div>
@@ -92,7 +140,7 @@ const Header = () => {
           </div>
           
           {/* Mobile CTA - Right */}
-          <button className={`lg:hidden text-[10px] tracking-wider font-medium border px-3 py-2 transition-all duration-300 absolute right-0 z-10 ${
+          <button className={`lg:hidden text-[10px] tracking-wider font-medium border px-3 py-2 transition-all duration-400 absolute right-0 z-10 rounded ${
             isScrolled 
               ? 'text-[#00223f] border-[#00223f]/50 hover:bg-[#00223f] hover:text-[#fdf8f3]' 
               : 'text-[#fdf8f3] border-[#fdf8f3]/50 hover:bg-[#fdf8f3] hover:text-[#00223f]'

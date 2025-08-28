@@ -19,7 +19,7 @@ const ServicesSection = () => {
       title: "Wedding Planning",
       description: "Complete coordination from concept to celebration",
       accent: "from-[#AA7220] to-[#d8ad7f]",
-      images: ["/circle.png", "/logo.png", "/logo1.png"]
+      images: ["/circle.png", "/logo.png"]
     },
     {
       icon: (
@@ -30,7 +30,7 @@ const ServicesSection = () => {
       title: "Event Design", 
       description: "Custom themes and décor for breathtaking spaces",
       accent: "from-[#d77759] to-[#87241a]",
-      images: ["/circle.png", "/logo.png", "/logo1.png"]
+      images: ["/circle.png", "/logo.png"]
     },
     {
       icon: (
@@ -41,7 +41,7 @@ const ServicesSection = () => {
       title: "Entertainment",
       description: "Professional booking and coordination services",
       accent: "from-[#76522a] to-[#AA7220]",
-      images: ["/circle.png", "/logo.png", "/logo1.png"]
+      images: ["/circle.png", "/logo.png"]
     },
     {
       icon: (
@@ -53,7 +53,7 @@ const ServicesSection = () => {
       title: "Photography",
       description: "Capturing every precious moment beautifully",
       accent: "from-[#d8ad7f] to-[#d77759]",
-      images: ["/circle.png", "/logo.png", "/logo1.png"]
+      images: ["/circle.png", "/logo.png"]
     }
   ];
 
@@ -106,7 +106,7 @@ const ServicesSection = () => {
                 </div>
 
                 {/* Main service card */}
-                <div className="w-64 h-80 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg transition-all duration-400 group-hover:shadow-xl group-hover:scale-[1.02] border border-[#d8ad7f]/30 relative overflow-hidden">
+                <div className="main-service-card w-64 h-80 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg transition-all duration-400 group-hover:shadow-xl border border-[#d8ad7f]/30 relative overflow-hidden">
                   {/* Gradient accent */}
                   <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${service.accent}`}></div>
                   
@@ -185,17 +185,19 @@ const ServicesSection = () => {
           transform: translateX(0px) translateY(0px) rotate(0deg);
         }
         
-        .card-2 {
-          opacity: 1;
-          transform: translateX(0px) translateY(0px) rotate(0deg);
+        /* Main service card slides LEFT */
+        .group:hover .main-service-card {
+          transform: translateX(-80px) translateY(-10px) rotate(-6deg) scale(1.02);
         }
         
+        /* First background card stays CENTER but moves up */
+        .group:hover .card-0 {
+          transform: translateX(0px) translateY(-20px) rotate(0deg);
+        }
+        
+        /* Second background card slides RIGHT */
         .group:hover .card-1 {
-          transform: translateX(40px) translateY(10px) rotate(6deg);
-        }
-        
-        .group:hover .card-2 {
-          transform: translateX(80px) translateY(20px) rotate(12deg);
+          transform: translateX(80px) translateY(-10px) rotate(6deg);
         }
       `}</style>
     </section>
